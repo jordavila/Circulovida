@@ -1,0 +1,233 @@
+<!DOCTYPE html><html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Círculo de la Vida — Interactivo</title>
+  <style>
+    :root{
+      --bg:#0f1220; --panel:#141833; --ink:#e6e8ff; --muted:#98a2ff; --accent:#6dd3ff; --ok:#8ef6a0; --warn:#ffd166; --err:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; color:var(--ink); background: radial-gradient(1200px 800px at 20% -10%, #1f2455 0%, #0f1220 60%);}    
+    .wrap{max-width:1100px; margin:auto; padding:24px;}
+    header{display:flex; gap:16px; align-items:center; justify-content:space-between; margin-bottom:16px}
+    h1{font-size:clamp(20px, 2.8vw, 34px); margin:0; letter-spacing:.2px}
+    .hint{opacity:.8; font-size:.95rem}
+    .board{display:grid; grid-template-columns: 1.1fr .9fr; gap:18px}
+    .card{background:linear-gradient(180deg, #161b3b 0%, #111538 100%); border:1px solid #23295a; border-radius:18px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .canvasbox{position:relative; aspect-ratio:1/1; width:100%;}
+    canvas{width:100%; height:100%; display:block}
+    .legend{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px}
+    .tag{display:flex; align-items:center; gap:8px; background:#0f1332; border:1px solid #242a5f; padding:10px 12px; border-radius:12px}
+    .tag input{width:100%; accent-color:#7fdcff}
+    .name{font-weight:600}
+    .value{margin-left:auto; font-variant-numeric:tabular-nums}
+    .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+    button{background:#1b2152; border:1px solid #2a3280; color:var(--ink); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600}
+    button:hover{filter:brightness(1.1)}
+    .primary{background:linear-gradient(90deg, #2c5ef9, #2ba8ff); border-color:#2ba8ff}
+    .ghost{background:#0e1330}
+    .status{margin-top:10px; min-height:24px; font-size:.95rem}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+    .small{font-size:.86rem; opacity:.85}
+    footer{margin-top:22px; opacity:.9}
+    @media (max-width: 900px){ .board{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Actividad: Círculo de la Vida (1–10)</h1>
+      <div class="hint">Haz click dentro del gráfico para asignar valores. 1 = centro · 10 = borde.</div>
+    </header><div class="board">
+  <!-- Lienzo interactivo -->
+  <section class="card">
+    <div class="canvasbox">
+      <canvas id="wheel" width="900" height="900" aria-label="Círculo de la vida" role="img"></canvas>
+    </div>
+    <div class="btns">
+      <button id="reset" class="ghost">Reiniciar</button>
+      <button id="random" class="ghost">Autollenado</button>
+      <button id="submit" class="primary">Enviar</button>
+    </div>
+    <div id="status" class="status"></div>
+  </section>
+
+  <!-- Controles por categoría -->
+  <aside class="card">
+    <h3 style="margin:4px 0 10px">Categorías</h3>
+    <div id="list" class="legend"></div>
+    <p class="small">Consejo: también puedes arrastrar el punto de cada eje manteniendo presionado el mouse o tocando en móvil.</p>
+    <hr style="border-color:#23295a; opacity:.4; margin:12px 0">
+    <details>
+      <summary><strong>Exportación en la nube (opcional)</strong></summary>
+      <p class="small">Este archivo funciona 100% del lado del cliente. Al pulsar <em>Enviar</em>, se descargan un PNG y un JSON. Si deseas además guardar en la nube gratis, crea un endpoint (por ejemplo con <a href="https://web3forms.com/" target="_blank" rel="noopener">Web3Forms</a> o una hoja de Google con Apps Script) y pégalo aquí. Si se deja vacío, se omite el envío remoto.</p>
+      <label class="small">URL endpoint:<br>
+        <input id="endpoint" placeholder="https://tu-endpoint.example/" style="width:100%; padding:10px; border-radius:10px; border:1px solid #2a3280; background:#0f1332; color:var(--ink)" />
+      </label>
+    </details>
+  </aside>
+</div>
+
+<footer class="small">
+  Hecho para alojarse fácilmente en <strong>GitHub Pages</strong>. Guarda este archivo como <code>index.html</code> en un repositorio y habilita Pages. Sin dependencias externas.
+</footer>
+
+  </div><script>
+(() => {
+  // ===== Configurable =====
+  const categories = [
+    'Salud', 'Finanzas', 'Carrera/Trabajo', 'Familia/Amigos',
+    'Amor/Pareja', 'Crecimiento Personal', 'Diversión/Ocio', 'Entorno/Hogar'
+  ];
+  const MAX = 10; // escala 1-10
+  // ===== State =====
+  const values = new Array(categories.length).fill(null); // null hasta que el usuario asigne
+  let draggingIndex = -1;
+
+  // ===== Canvas setup =====
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  function dprScale(){
+    const {width, height} = canvas; const dpr = Math.max(1, window.devicePixelRatio||1);
+    canvas.width = width * dpr; canvas.height = height * dpr; canvas.style.width = width+'px'; canvas.style.height = height+'px'; ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  dprScale();
+  window.addEventListener('resize', dprScale);
+
+  // ===== Geometry helpers =====
+  const PAD = 40; // margen para etiquetas
+  function center(){ return { cx: canvas.clientWidth/2, cy: canvas.clientHeight/2, r: Math.min(canvas.clientWidth, canvas.clientHeight)/2 - PAD }; }
+  function angleFor(i){ return (Math.PI*2 * i / categories.length) - Math.PI/2; } // 0 en arriba
+  function polarToXY(ratio, ang){ const {cx,cy,r} = center(); return { x: cx + Math.cos(ang)*r*ratio, y: cy + Math.sin(ang)*r*ratio}; }
+  function xyToRatioAndIndex(x,y){ const {cx,cy,r} = center(); const dx=x-cx, dy=y-cy; let ang=Math.atan2(dy,dx); // -pi..pi
+    let a = ang + Math.PI/2; if(a<0) a += Math.PI*2; // 0 en arriba
+    const seg = (Math.PI*2)/categories.length; let idx = Math.round(a/seg) % categories.length; // categoría más cercana
+    const dist = Math.sqrt(dx*dx+dy*dy); const ratio = Math.min(1, Math.max(0, dist/r));
+    return {ratio, idx}; }
+
+  // ===== Draw =====
+  function draw(){
+    const {cx,cy,r} = center();
+    ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
+
+    // Fondo suave
+    const g = ctx.createRadialGradient(cx,cy, r*.1, cx,cy, r);
+    g.addColorStop(0,'#1a1e46'); g.addColorStop(1,'#0e112b');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,r+20,0,Math.PI*2); ctx.fill();
+
+    // Anillos 1..10
+    ctx.strokeStyle = '#2a3280'; ctx.lineWidth = 1;
+    for(let i=1;i<=MAX;i++){
+      ctx.globalAlpha = i%5===0? 0.9 : 0.35;
+      ctx.beginPath(); ctx.arc(cx,cy,r*i/MAX,0,Math.PI*2); ctx.stroke();
+      if(i%5===0){ ctx.globalAlpha=0.8; ctx.fillStyle='#98a2ff'; ctx.font='12px system-ui'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(String(i), cx + r*i/MAX + 6, cy); }
+    }
+    ctx.globalAlpha = 1;
+
+    // Ejes y etiquetas
+    categories.forEach((name,i)=>{
+      const ang = angleFor(i);
+      const pOut = polarToXY(1, ang);
+      ctx.strokeStyle = '#2a3280'; ctx.globalAlpha=.55; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(pOut.x,pOut.y); ctx.stroke(); ctx.globalAlpha=1;
+
+      // etiqueta
+      const label = polarToXY(1.08, ang);
+      ctx.fillStyle = '#e6e8ff'; ctx.font='14px system-ui'; ctx.textAlign = Math.abs(Math.cos(ang))<0.3? 'center' : (Math.cos(ang)>0? 'left':'right');
+      ctx.textBaseline = Math.abs(Math.sin(ang))<0.3? 'middle' : (Math.sin(ang)>0? 'top':'bottom');
+      ctx.fillText(name, label.x, label.y);
+    });
+
+    // Polígono de valores
+    const points = categories.map((_,i)=>{
+      const v = values[i]==null? 0 : values[i];
+      const ratio = Math.max(0.05, v/MAX); // mínimo pequeño para que sea visible
+      return polarToXY(ratio, angleFor(i));
+    });
+
+    // Área
+    ctx.beginPath(); points.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }); ctx.closePath();
+    ctx.fillStyle = 'rgba(109, 211, 255, 0.22)'; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle = '#6dd3ff'; ctx.stroke();
+
+    // Puntos arrastrables
+    points.forEach((p,i)=>{
+      ctx.beginPath(); ctx.arc(p.x,p.y,6,0,Math.PI*2); ctx.fillStyle = values[i]==null? '#555a9b' : '#8ef6a0'; ctx.fill(); ctx.strokeStyle='#1b2152'; ctx.stroke();
+    });
+  }
+
+  // ===== List UI =====
+  const list = document.getElementById('list');
+  const status = document.getElementById('status');
+  function renderList(){
+    list.innerHTML = '';
+    categories.forEach((name,i)=>{
+      const row = document.createElement('div'); row.className='tag';
+      const nm = document.createElement('div'); nm.className='name'; nm.textContent = name; row.appendChild(nm);
+      const rng = document.createElement('input'); rng.type='range'; rng.min=1; rng.max=MAX; rng.step=1; rng.value = values[i]==null? 1 : values[i];
+      rng.addEventListener('input', ()=>{ values[i] = Number(rng.value); draw(); renderList(); });
+      row.appendChild(rng);
+      const val = document.createElement('div'); val.className='value'; val.textContent = values[i]==null? '—' : values[i]; row.appendChild(val);
+      list.appendChild(row);
+    });
+  }
+
+  // ===== Interaction on canvas =====
+  function setFromXY(x,y){ const {ratio, idx} = xyToRatioAndIndex(x,y); const val = Math.max(1, Math.round(ratio*MAX)); values[idx]=val; draw(); renderList(); }
+  function hitPointIndex(x,y){
+    // Detecta si clic cerca a un punto para permitir arrastrar
+    const pts = categories.map((_,i)=> polarToXY((Math.max(0.05,(values[i]||1)/MAX)), angleFor(i)) );
+    for(let i=0;i<pts.length;i++){ const p=pts[i]; const d=Math.hypot(x-p.x, y-p.y); if(d<12) return i; }
+    return -1;
+  }
+  canvas.addEventListener('mousedown', e=>{ const rect = canvas.getBoundingClientRect(); const x=e.clientX-rect.left, y=e.clientY-rect.top; const hit=hitPointIndex(x,y); if(hit>=0){ draggingIndex=hit; } else { setFromXY(x,y); }});
+  canvas.addEventListener('mousemove', e=>{ if(draggingIndex<0) return; const rect = canvas.getBoundingClientRect(); const x=e.clientX-rect.left, y=e.clientY-rect.top; const {ratio} = xyToRatioAndIndex(x,y); values[draggingIndex] = Math.max(1, Math.round(ratio*MAX)); draw(); renderList(); });
+  window.addEventListener('mouseup', ()=> draggingIndex=-1);
+  // Touch
+  canvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; const rect = canvas.getBoundingClientRect(); const x=t.clientX-rect.left, y=t.clientY-rect.top; const hit=hitPointIndex(x,y); if(hit>=0){ draggingIndex=hit; } else { setFromXY(x,y); } });
+  canvas.addEventListener('touchmove', e=>{ if(draggingIndex<0) return; const t=e.touches[0]; const rect = canvas.getBoundingClientRect(); const x=t.clientX-rect.left, y=t.clientY-rect.top; const {ratio} = xyToRatioAndIndex(x,y); values[draggingIndex] = Math.max(1, Math.round(ratio*MAX)); draw(); renderList(); });
+  window.addEventListener('touchend', ()=> draggingIndex=-1);
+
+  // ===== Actions =====
+  document.getElementById('reset').addEventListener('click', ()=>{ values.fill(null); draw(); renderList(); status.textContent=''; });
+  document.getElementById('random').addEventListener('click', ()=>{ for(let i=0;i<values.length;i++){ values[i]= 1 + Math.floor(Math.random()*MAX); } draw(); renderList(); status.textContent='Valores de ejemplo cargados.'; status.className='status'; });
+
+  // ===== Submit: valida, descarga PNG+JSON y (opcional) POST a endpoint =====
+  document.getElementById('submit').addEventListener('click', async ()=>{
+    const pending = values.reduce((a,v,i)=> (v==null? a.concat(categories[i]) : a), []);
+    if(pending.length){ status.textContent = 'Faltan categorías por calificar: ' + pending.join(', '); status.className='status warn'; return; }
+
+    // 1) generar PNG del canvas actual
+    const pngUrl = canvas.toDataURL('image/png');
+    const ts = new Date(); const pad=n=> String(n).padStart(2,'0');
+    const fname = `circulo-de-la-vida_${ts.getFullYear()}${pad(ts.getMonth()+1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}.png`;
+    triggerDownload(pngUrl, fname);
+
+    // 2) generar JSON
+    const payload = { timestamp: ts.toISOString(), categories, values, scale: MAX };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const jname = fname.replace('.png','.json');
+    triggerDownload(URL.createObjectURL(blob), jname);
+
+    // 3) envío opcional a endpoint
+    const endpoint = document.getElementById('endpoint').value.trim();
+    if(endpoint){
+      try{
+        const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+          project: 'Circulo de la Vida', data: payload, image: pngUrl
+        })});
+        if(!res.ok) throw new Error(res.status + ' ' + res.statusText);
+        status.textContent='¡Listo! Se descargaron los archivos y se envió una copia al endpoint.'; status.className='status ok';
+      }catch(err){ status.textContent='Se descargaron los archivos, pero falló el envío remoto: '+ err.message; status.className='status err'; }
+    }else{
+      status.textContent='¡Listo! Se descargaron PNG y JSON. (Configura un endpoint si quieres copia en la nube)'; status.className='status ok';
+    }
+  });
+
+  function triggerDownload(url, filename){ const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=> URL.revokeObjectURL(url), 2000); }
+
+  // Init
+  draw(); renderList();
+})();
+</script></body>
+</html>
