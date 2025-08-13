@@ -4,189 +4,163 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Círculo de la Vida</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 10px;
-    background: #fdfdfd;
-  }
-  canvas {
-    max-width: 100%;
-    height: auto;
-  }
-  .slider-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 5px 0;
-  }
-  .slider-container label {
-    font-size: 14px;
-    margin-bottom: 3px;
-  }
-  input[type="range"] {
-    width: 90%;
-  }
-  #nameInput {
-    width: 90%;
-    padding: 5px;
-    margin: 10px 0;
-    font-size: 16px;
-  }
-  button {
-    padding: 8px 16px;
-    font-size: 16px;
-    margin-top: 10px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-  }
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+        margin: 0;
+        padding: 10px;
+        text-align: center;
+    }
+    h1 {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+    input, button {
+        padding: 8px;
+        margin: 5px;
+        font-size: 1em;
+        width: 90%;
+        max-width: 300px;
+    }
+    canvas {
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto;
+        display: block;
+    }
+    .sliders {
+        max-width: 400px;
+        margin: 0 auto;
+        text-align: left;
+    }
+    .slider-group {
+        margin-bottom: 10px;
+    }
+    label {
+        font-size: 0.9em;
+    }
 </style>
 </head>
 <body>
 
-<h2>CIRCULO DE LA VIDA<br>Programa Raiz Viva<br>by: Karen Valencia - Health Coach</h2>
+<h1>CIRCULO DE LA VIDA<br>Programa Raiz Viva<br>by: Karen Valencia - Health Coach</h1>
+<input type="text" id="nombre" placeholder="Ingresa tu nombre" />
 
-<input type="text" id="nameInput" placeholder="Ingresa tu nombre">
+<canvas id="radarChart" width="400" height="400"></canvas>
 
-<canvas id="myChart"></canvas>
+<div class="sliders" id="sliders"></div>
 
-<div id="sliders"></div>
+<button id="descargar">Descargar</button>
 
-<button id="downloadBtn">Descargar PNG</button>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
 
 <script>
 const categorias = [
-  "Salud física", "Finanzas", "Carrera/Negocio", "Entorno físico",
-  "Amigos/Familia", "Diversión", "Desarrollo personal", "Espiritualidad"
+    "Salud Física",
+    "Salud Emocional",
+    "Relaciones",
+    "Carrera/Trabajo",
+    "Finanzas",
+    "Crecimiento Personal",
+    "Diversión/Ocio",
+    "Espiritualidad"
 ];
 
 let valores = new Array(categorias.length).fill(5);
 
-const ctx = document.getElementById('myChart').getContext('2d');
+const ctx = document.getElementById('radarChart').getContext('2d');
 
-const chart = new Chart(ctx, {
-  type: 'radar',
-  data: {
-    labels: categorias,
-    datasets: [{
-      label: 'Nivel',
-      data: valores,
-      fill: true,
-      backgroundColor: 'rgba(0,123,255,0.2)',
-      borderColor: '#007bff',
-      pointBackgroundColor: '#007bff',
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: '#007bff'
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      r: {
-        suggestedMin: 0,
-        suggestedMax: 10,
-        ticks: {
-          stepSize: 1,
-          backdropColor: 'transparent'
+const radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+        labels: categorias,
+        datasets: [{
+            label: 'Tu Círculo',
+            data: valores,
+            backgroundColor: 'rgba(105, 201, 185, 0.2)',
+            borderColor: '#69c9b9',
+            borderWidth: 2,
+            pointBackgroundColor: '#69c9b9'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            r: {
+                suggestedMin: 0,
+                suggestedMax: 10,
+                ticks: { stepSize: 1, backdropColor: 'transparent' },
+                pointLabels: {
+                    callback: function(value, index) {
+                        return value;
+                    },
+                    font: { size: 12 },
+                    color: '#000'
+                }
+            }
         },
-        pointLabels: {
-          display: false // Ocultamos para dibujar manualmente
+        plugins: {
+            legend: { display: false }
+        },
+        onClick: (evt) => {
+            const points = radarChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (points.length) {
+                const idx = points[0].index;
+                const coords = radarChart.scales.r.getValueForPixel(radarChart.scales.r.getDistanceFromCenterForValue(0));
+                let mousePos = Chart.helpers.getRelativePosition(evt, radarChart);
+                let dx = mousePos.x - radarChart.width / 2;
+                let dy = mousePos.y - radarChart.height / 2;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                let val = Math.round((dist / (radarChart.scales.r.drawingArea)) * 10);
+                valores[idx] = Math.min(10, Math.max(1, val));
+                radarChart.data.datasets[0].data = valores;
+                document.getElementById(`slider-${idx}`).value = valores[idx];
+                radarChart.update();
+            }
         }
-      }
-    },
-    onClick: (e) => {
-      const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-      if (points.length) {
-        const index = points[0].index;
-        valores[index] = (valores[index] + 1) % 11;
-        chart.update();
-        document.getElementById(`slider-${index}`).value = valores[index];
-      }
-    },
-    plugins: {
-      legend: { display: false }
     }
-  },
-  plugins: [{
-    id: 'radialLabels',
-    afterDraw(chart) {
-      const { ctx, chartArea: { width, height }, scales: { r } } = chart;
-      ctx.save();
-      ctx.font = '12px Arial';
-      ctx.fillStyle = '#000';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      categorias.forEach((label, i) => {
-        const angle = r.getIndexAngle(i) - Math.PI / 2;
-        const radius = r.drawingArea + 20;
-        const x = r.xCenter + Math.cos(angle) * radius;
-        const y = r.yCenter + Math.sin(angle) * radius;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle + Math.PI / 2);
-        ctx.fillText(label, 0, 0);
-        ctx.restore();
-      });
-      ctx.restore();
-    }
-  }]
 });
 
 // Crear sliders
 const slidersDiv = document.getElementById('sliders');
 categorias.forEach((cat, i) => {
-  const container = document.createElement('div');
-  container.classList.add('slider-container');
-  const label = document.createElement('label');
-  label.textContent = cat;
-  const slider = document.createElement('input');
-  slider.type = 'range';
-  slider.min = 0;
-  slider.max = 10;
-  slider.value = valores[i];
-  slider.id = `slider-${i}`;
-  slider.addEventListener('input', (e) => {
-    valores[i] = Number(e.target.value);
-    chart.data.datasets[0].data = valores;
-    chart.update();
-  });
-  container.appendChild(label);
-  container.appendChild(slider);
-  slidersDiv.appendChild(container);
+    const div = document.createElement('div');
+    div.className = 'slider-group';
+    div.innerHTML = `
+        <label>${cat}: <span id="val-${i}">${valores[i]}</span></label>
+        <input type="range" min="1" max="10" value="${valores[i]}" id="slider-${i}" />
+    `;
+    slidersDiv.appendChild(div);
+    document.getElementById(`slider-${i}`).addEventListener('input', (e) => {
+        valores[i] = parseInt(e.target.value);
+        document.getElementById(`val-${i}`).innerText = e.target.value;
+        radarChart.data.datasets[0].data = valores;
+        radarChart.update();
+    });
 });
 
-// Descargar PNG
-document.getElementById('downloadBtn').addEventListener('click', () => {
-  const nombre = document.getElementById('nameInput').value.trim();
-  const canvas = document.createElement('canvas');
-  const ctx2 = canvas.getContext('2d');
-  const originalCanvas = document.getElementById('myChart');
+// Botón descargar
+document.getElementById('descargar').addEventListener('click', () => {
+    const nombre = document.getElementById('nombre').value.trim();
+    if (!nombre) { alert('Por favor ingresa tu nombre'); return; }
 
-  canvas.width = originalCanvas.width;
-  canvas.height = originalCanvas.height + 60;
+    // Crear canvas temporal con título y gráfico
+    html2canvas(document.body).then(canvas => {
+        const ctx2 = canvas.getContext('2d');
+        ctx2.font = '16px Arial';
+        ctx2.fillStyle = '#000';
+        ctx2.fillText(`Participante: ${nombre}`, 10, 30);
 
-  ctx2.fillStyle = '#fff';
-  ctx2.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx2.font = '20px Arial';
-  ctx2.fillStyle = '#000';
-  ctx2.textAlign = 'center';
-  ctx2.fillText("CIRCULO DE LA VIDA - Programa Raiz Viva", canvas.width / 2, 25);
-  ctx2.fillText("by: Karen Valencia - Health Coach", canvas.width / 2, 50);
-  if (nombre) ctx2.fillText(`Participante: ${nombre}`, canvas.width / 2, canvas.height - 20);
-
-  ctx2.drawImage(originalCanvas, 0, 60);
-
-  const link = document.createElement('a');
-  link.download = 'circulo_de_la_vida.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+        const link = document.createElement('a');
+        link.download = `circulo_de_la_vida_${nombre}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    });
 });
 </script>
 
