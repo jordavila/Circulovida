@@ -1,151 +1,219 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Círculo de la Vida</title>
-<style>
-  body {
-    background-color: #fafafa;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 10px;
-  }
-  h1 {
-    font-size: 1.3em;
-    color: #333;
-    margin-bottom: 5px;
-  }
-  #chart-container {
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    margin: auto;
-  }
-  input[type="text"] {
-    padding: 8px;
-    font-size: 1em;
-    margin: 10px 0;
-    width: 90%;
-    max-width: 400px;
-  }
-  button {
-    padding: 10px 20px;
-    font-size: 1em;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #45a049;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Círculo de la Vida — Programa Raiz Viva</title>
+  <style>
+    :root{ --bg:#0f1220; --panel:#141833; --ink:#ffffff; --line:#2a3280; --accent:#6dd3ff; --ok:#8ef6a0; }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{ margin:0; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--ink); }
+    .wrap{ max-width:820px; margin:0 auto; padding:14px; display:flex; flex-direction:column; gap:10px }
+    .title{ text-align:center; line-height:1.25 }
+    .title .l1{ font-weight:800; letter-spacing:.5px; font-size:clamp(18px, 5vw, 26px); }
+    .title .l2,.title .l3{ font-weight:600; opacity:.95; font-size:clamp(13px, 3.6vw, 18px); }
+    .controls{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; margin-top:6px }
+    @media (max-width:520px){ .controls{ grid-template-columns:1fr } }
+    input[type="text"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #26307a; background:#0f1332; color:var(--ink); font-size:16px }
+    button{ padding:12px 16px; border-radius:12px; border:1px solid #2ba8ff; background:linear-gradient(90deg,#2c5ef9,#2ba8ff); color:#fff; font-weight:700; cursor:pointer }
+    .canvasbox{ width:100%; margin:6px auto 4px; }
+    canvas{ width:100%; height:auto; display:block; touch-action:none }
+    .note{ text-align:center; opacity:.8; font-size:.9rem }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="title">
+      <div class="l1">CIRCULO DE LA VIDA</div>
+      <div class="l2">Programa Raiz Viva</div>
+      <div class="l3">by: Karen Valencia - Health Couch</div>
+    </div>
 
-<h1>
-  CÍRCULO DE LA VIDA<br>
-  Programa Raiz Viva<br>
-  by: Karen Valencia - Health Coach
-</h1>
+    <div class="controls">
+      <input id="nombre" type="text" placeholder="Nombre de la persona" aria-label="Nombre" />
+      <button id="download">Descargar</button>
+    </div>
 
-<input type="text" id="nombre" placeholder="Ingresa tu nombre">
+    <div class="canvasbox">
+      <canvas id="wheel" width="600" height="600" aria-label="Círculo de la vida" role="img"></canvas>
+    </div>
 
-<div id="chart-container">
-  <canvas id="lifeChart"></canvas>
-</div>
+    <div class="note">Tip: toca o arrastra los puntos para cambiar los valores (1 = centro · 10 = borde).</div>
+  </div>
 
-<button id="downloadBtn">Descargar</button>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const categories = [
-  "Salud Física",
-  "Salud Emocional",
-  "Carrera/Trabajo",
-  "Dinero",
-  "Desarrollo Personal",
-  "Amigos/Familia",
-  "Diversión/Ocio",
-  "Pareja/Relaciones",
-  "Entorno",
-  "Espiritualidad"
-];
+(()=>{
+  // ===== Configuración =====
+  const categories = [
+    'Salud', 'Finanzas', 'Carrera/Trabajo', 'Familia/Amigos',
+    'Amor/Pareja', 'Crecimiento Personal', 'Diversión/Ocio', 'Entorno/Hogar'
+  ];
+  const MAX = 10;
 
-let dataValues = Array(categories.length).fill(5);
+  // ===== Estado =====
+  const values = new Array(categories.length).fill(5); // valor inicial 5
+  let draggingIndex = -1;
 
-const ctx = document.getElementById('lifeChart').getContext('2d');
-const chart = new Chart(ctx, {
-  type: 'radar',
-  data: {
-    labels: categories,
-    datasets: [{
-      label: 'Nivel',
-      data: dataValues,
-      fill: true,
-      backgroundColor: 'rgba(54, 162, 235, 0.2)',
-      borderColor: 'rgba(54, 162, 235, 1)',
-      pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-      pointRadius: 6
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: true,
-    scales: {
-      r: {
-        min: 0,
-        max: 10,
-        ticks: { stepSize: 1, color: '#333' },
-        pointLabels: { font: { size: 14 }, color: '#111' }
-      }
-    },
-    plugins: { legend: { display: false } },
-    onClick: (evt) => {
-      const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-      if (points.length) {
-        const index = points[0].index;
-        let newValue = prompt(`Nuevo valor para "${categories[index]}" (1-10):`, dataValues[index]);
-        if (newValue !== null) {
-          newValue = parseInt(newValue);
-          if (!isNaN(newValue) && newValue >= 1 && newValue <= 10) {
-            dataValues[index] = newValue;
-            chart.data.datasets[0].data = dataValues;
-            chart.update();
-          }
-        }
-      }
-    }
+  // ===== Canvas & DPI =====
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+
+  function resizeCanvas(){
+    // Escala amigable a móvil, dejando margen para etiquetas
+    const vw = Math.min(window.innerWidth, 820) - 28; // padding lateral
+    const vh = window.innerHeight * 0.62; // deja espacio para título/controles
+    const size = Math.max(300, Math.min(vw, vh));
+
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(size * dpr);
+    canvas.height = Math.floor(size * dpr);
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0); // dibujar en unidades CSS
+
+    draw();
   }
-};
 
-document.getElementById('downloadBtn').addEventListener('click', () => {
-  const nombre = document.getElementById('nombre').value || "Sin nombre";
-  const tempCanvas = document.createElement('canvas');
-  const size = 1000;
-  tempCanvas.width = size;
-  tempCanvas.height = size + 50;
-  const tempCtx = tempCanvas.getContext('2d');
+  // ===== Geometría =====
+  const LABEL_PAD = 74; // margen extra para que todas las etiquetas sean visibles
+  function geom(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const cx = w/2, cy = h/2;
+    const r = Math.min(w, h)/2 - LABEL_PAD; // radio para el gráfico (sin etiquetas)
+    return { w,h,cx,cy,r };
+  }
+  function angleFor(i){ return (Math.PI*2 * i / categories.length) - Math.PI/2; }
+  function polarToXY(ratio, ang){ const {cx,cy,r} = geom(); return { x: cx + Math.cos(ang)*r*ratio, y: cy + Math.sin(ang)*r*ratio }; }
 
-  // Dibujar gráfico en el canvas temporal
-  tempCtx.fillStyle = "#fff";
-  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-  tempCtx.drawImage(chart.canvas, 0, 0, size, size);
+  // ===== Dibujo =====
+  function draw(){
+    const {w,h,cx,cy,r} = geom();
+    // fondo
+    const g = ctx.createRadialGradient(cx,cy, r*0.05, cx,cy, r*1.2);
+    g.addColorStop(0,'#161b3b'); g.addColorStop(1,'#0f1220');
+    ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
 
-  // Escribir el nombre
-  tempCtx.fillStyle = "#000";
-  tempCtx.font = "bold 28px Arial";
-  tempCtx.textAlign = "center";
-  tempCtx.fillText(`Nombre: ${nombre}`, size / 2, size + 35);
+    // anillos 1..10 (sin números)
+    ctx.strokeStyle = '#25307a'; ctx.lineWidth = 1;
+    for(let i=1;i<=MAX;i++){
+      ctx.globalAlpha = i%5===0? 0.75 : 0.35;
+      ctx.beginPath(); ctx.arc(cx,cy,r*i/MAX,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
 
-  const link = document.createElement('a');
-  link.download = 'circulo_de_la_vida.png';
-  link.href = tempCanvas.toDataURL();
-  link.click();
-});
+    // ejes y etiquetas
+    categories.forEach((name,i)=>{
+      const ang = angleFor(i);
+      const out = polarToXY(1,ang);
+      ctx.strokeStyle = '#2a3280'; ctx.globalAlpha=.6; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(out.x,out.y); ctx.stroke(); ctx.globalAlpha=1;
+
+      // etiqueta fuera del gráfico
+      const labelPos = polarToXY(1.12, ang); // 12% fuera del radio
+      const fontSize = Math.max(11, Math.min(16, r*0.075));
+      ctx.font = fontSize + 'px system-ui';
+      ctx.fillStyle = '#ffffff';
+      // alineación inteligente
+      const c = Math.cos(ang), s = Math.sin(ang);
+      if (Math.abs(c) < 0.28) ctx.textAlign = 'center'; else ctx.textAlign = (c>0? 'left':'right');
+      ctx.textBaseline = (Math.abs(s) < 0.28)? 'middle' : (s>0? 'top':'bottom');
+      const padX = (c>0? 8 : (c<0? -8:0));
+      const padY = (s>0? 6 : (s<0? -6:0));
+      ctx.fillText(name, labelPos.x + padX, labelPos.y + padY);
+    });
+
+    // polígono de valores
+    const pts = categories.map((_,i)=> polarToXY(Math.max(0.1, values[i]/MAX), angleFor(i)) );
+    ctx.beginPath(); pts.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }); ctx.closePath();
+    ctx.fillStyle = 'rgba(109,211,255,0.22)'; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle = '#6dd3ff'; ctx.stroke();
+
+    // puntos arrastrables
+    pts.forEach((p)=>{ ctx.beginPath(); ctx.arc(p.x,p.y,7,0,Math.PI*2); ctx.fillStyle= '#8ef6a0'; ctx.fill(); ctx.strokeStyle='#0e1330'; ctx.stroke(); });
+  }
+
+  // ===== Interacción =====
+  function pointerXY(evt){ const rect = canvas.getBoundingClientRect(); const x = evt.clientX - rect.left; const y = evt.clientY - rect.top; return {x,y}; }
+  function nearestAxisIndex(x,y){
+    const {cx,cy} = geom(); const dx=x-cx, dy=y-cy; let ang=Math.atan2(dy,dx) + Math.PI/2; if(ang<0) ang += Math.PI*2;
+    const seg = (Math.PI*2)/categories.length; return Math.round(ang/seg) % categories.length; }
+  function valueAlongAxisFromXY(index, x, y){
+    const {cx,cy,r} = geom(); const ang = angleFor(index); const ax = Math.cos(ang), ay = Math.sin(ang);
+    const vx = x - cx, vy = y - cy; // vector desde el centro al puntero
+    // proyección del puntero sobre el eje
+    const t = (vx*ax + vy*ay); // longitud proyectada en unidades de px
+    const ratio = Math.max(0, Math.min(1, t / r));
+    const val = Math.max(1, Math.min(10, Math.round(ratio * MAX)));
+    return val;
+  }
+  function hitPointIndex(x,y){
+    // detecta si el puntero está cerca de algún punto (para arrastrar)
+    for(let i=0;i<categories.length;i++){
+      const p = polarToXY(Math.max(0.1, values[i]/MAX), angleFor(i));
+      if (Math.hypot(x-p.x, y-p.y) <= 14) return i;
+    }
+    return -1;
+  }
+
+  canvas.addEventListener('pointerdown', (e)=>{
+    canvas.setPointerCapture(e.pointerId);
+    const {x,y} = pointerXY(e);
+    const hit = hitPointIndex(x,y);
+    if (hit>=0){ draggingIndex = hit; }
+    else { const idx = nearestAxisIndex(x,y); values[idx] = valueAlongAxisFromXY(idx,x,y); draw(); }
+  });
+  canvas.addEventListener('pointermove', (e)=>{
+    if (draggingIndex<0) return; const {x,y} = pointerXY(e); values[draggingIndex] = valueAlongAxisFromXY(draggingIndex,x,y); draw();
+  });
+  window.addEventListener('pointerup', ()=>{ draggingIndex=-1; });
+  window.addEventListener('pointercancel', ()=>{ draggingIndex=-1; });
+
+  // ===== Descargar PNG (con título y nombre) =====
+  document.getElementById('download').addEventListener('click', ()=>{
+    const nombre = (document.getElementById('nombre').value || '').trim();
+    if(!nombre){ alert('Por favor ingresa el nombre para incluirlo en la imagen.'); return; }
+
+    // crear un lienzo temporal con encabezado y pie
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const baseW = canvas.clientWidth, baseH = canvas.clientHeight;
+    const headerH = Math.round(baseH * 0.22); // espacio para 3 líneas de título
+    const footerH = Math.round(baseH * 0.12); // espacio para el nombre
+    const out = document.createElement('canvas');
+    out.width = Math.floor(baseW * dpr); out.height = Math.floor((headerH + baseH + footerH) * dpr);
+    const octx = out.getContext('2d'); octx.setTransform(dpr,0,0,dpr,0,0);
+
+    // fondo
+    octx.fillStyle = '#0f1220'; octx.fillRect(0,0,out.width,out.height);
+
+    // título
+    const cx = baseW/2; let ty = 24;
+    octx.textAlign='center'; octx.fillStyle = '#ffffff';
+    octx.font = '800 ' + Math.max(16, Math.round(baseW*0.06)) + 'px system-ui';
+    octx.fillText('CIRCULO DE LA VIDA', cx, ty + 8 + Math.max(16, Math.round(baseW*0.06)) * 0.8);
+    octx.font = '600 ' + Math.max(12, Math.round(baseW*0.035)) + 'px system-ui';
+    ty += Math.max(28, Math.round(baseW*0.09));
+    octx.fillText('Programa Raiz Viva', cx, ty);
+    ty += Math.max(22, Math.round(baseW*0.06));
+    octx.fillText('by: Karen Valencia - Health Couch', cx, ty);
+
+    // gráfico
+    octx.drawImage(canvas, 0, headerH, baseW, baseH);
+
+    // nombre al pie
+    octx.font = '700 ' + Math.max(14, Math.round(baseW*0.045)) + 'px system-ui';
+    octx.fillText('Nombre: ' + nombre, cx, headerH + baseH + Math.max(26, Math.round(baseW*0.06)) );
+
+    // descarga
+    const a = document.createElement('a');
+    a.href = out.toDataURL('image/png');
+    a.download = 'circulo-de-la-vida_' + nombre.replace(/\s+/g,'_') + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  // ===== Init =====
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+})();
 </script>
-
 </body>
 </html>
