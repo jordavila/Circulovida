@@ -1,150 +1,139 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Radar con Iconos</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Círculo de la Vida con Iconos</title>
 <style>
   body {
-    margin: 0;
-    font-family: Arial, sans-serif;
     background-color: #111;
-    color: #fff;
+    color: white;
+    font-family: sans-serif;
     text-align: center;
+    margin: 20px;
   }
-
-  header img {
+  svg {
     width: 100%;
-    max-width: 600px;
-  }
-
-  .container {
-    padding: 10px;
-  }
-
-  canvas {
-    max-width: 100%;
+    max-width: 500px;
     height: auto;
+    background: transparent;
+    display: block;
+    margin: 0 auto;
+  }
+  .slider-container {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+  .slider-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+  }
+  input[type="range"] {
+    width: 100%;
+  }
+  label {
+    font-size: 1rem;
+    margin-bottom: 6px;
+    user-select: none;
   }
 
-  input {
-    padding: 8px;
-    font-size: 16px;
-    margin-top: 10px;
-    width: 90%;
-    max-width: 300px;
-  }
-
-  button {
-    margin: 5px;
-    padding: 8px 15px;
-    font-size: 16px;
-    background-color: #69c9b9;
-    color: #000;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  button:hover {
-    background-color: #58b3a4;
+  @media (max-width: 480px) {
+    .slider-container {
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+    .slider-block {
+      width: 80%;
+      max-width: 300px;
+    }
+    label {
+      font-size: 1.1rem;
+    }
+    svg text {
+      font-size: 16px !important;
+    }
   }
 </style>
 </head>
 <body>
 
-<header>
-  <img src="HEADER.jpg" alt="Encabezado">
-</header>
+<h2>Círculo de la Vida</h2>
+<svg id="circleChart" viewBox="0 0 500 500" aria-label="Círculo de la vida con iconos" role="img"></svg>
 
-<div class="container">
-  <input type="text" id="nombreInput" placeholder="Ingresa tu nombre">
-  <br>
-  <button onclick="reiniciarGrafico()">Reiniciar</button>
-  <button onclick="descargarGrafico()">Descargar</button>
-  <canvas id="radarChart"></canvas>
-</div>
+<div class="slider-container" id="sliders" aria-label="Controles para ajustar valores"></div>
 
 <script>
-const categorias = ["Fuerza", "Velocidad", "Resistencia", "Agilidad", "Precisión"];
-let valores = [5, 5, 5, 5, 5];
-let chart;
+const categorias = [
+  { nombre: "Salud", icono: "❤️" },
+  { nombre: "Trabajo", icono: "💼" },
+  { nombre: "Familia", icono: "👨‍👩‍👦" },
+  { nombre: "Amigos", icono: "🤝" },
+  { nombre: "Finanzas", icono: "💰" },
+  { nombre: "Ocio", icono: "🎯" },
+  { nombre: "Crecimiento", icono: "📚" },
+  { nombre: "Espiritualidad", icono: "🕊️" }
+];
 
-// Crear gráfico
-function crearGrafico(nombre = "") {
-  const ctx = document.getElementById("radarChart").getContext("2d");
-  if (chart) chart.destroy();
+let valores = new Array(categorias.length).fill(5);
 
-  chart = new Chart(ctx, {
-    type: 'radar',
-    data: {
-      labels: categorias,
-      datasets: [{
-        label: 'Puntaje',
-        data: valores,
-        fill: true,
-        backgroundColor: 'rgba(105, 201, 185, 0.3)',
-        borderColor: '#69c9b9',
-        pointBackgroundColor: '#69c9b9',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: '#69c9b9'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        r: {
-          min: 0,
-          max: 10,
-          ticks: { stepSize: 2, color: '#fff' },
-          grid: { color: 'rgba(255,255,255,0.2)' },
-          pointLabels: {
-            color: '#fff', // Sin transparencia
-            font: { size: 14, weight: 'bold' },
-            centerPointLabels: true // Centra las etiquetas con las líneas
-          }
-        }
-      },
-      plugins: {
-        datalabels: {
-          display: !!nombre,
-          formatter: () => nombre,
-          color: 'rgba(255,255,255,0.15)',
-          font: { size: 50, weight: 'bold' },
-          align: 'center',
-          anchor: 'center'
-        },
-        legend: { display: false }
-      }
-    },
-    plugins: [ChartDataLabels]
+const svg = document.getElementById("circleChart");
+const cx = 250, cy = 250, radioBase = 80, radioMax = 200;
+
+function dibujar() {
+  svg.innerHTML = "";
+
+  const anguloPaso = (2 * Math.PI) / categorias.length;
+  
+  // Líneas radiales
+  categorias.forEach((cat, i) => {
+    const angulo = i * anguloPaso - Math.PI / 2;
+    const x = cx + radioMax * Math.cos(angulo);
+    const y = cy + radioMax * Math.sin(angulo);
+    svg.innerHTML += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#555"/>`;
+  });
+
+  // Polígono valores
+  let puntos = "";
+  categorias.forEach((cat, i) => {
+    const angulo = i * anguloPaso - Math.PI / 2;
+    const r = radioBase + (valores[i] / 10) * (radioMax - radioBase);
+    const x = cx + r * Math.cos(angulo);
+    const y = cy + r * Math.sin(angulo);
+    puntos += `${x},${y} `;
+  });
+  svg.innerHTML += `<polygon points="${puntos}" fill="rgba(105,201,185,0.4)" stroke="#69c9b9" stroke-width="2"/>`;
+
+  // Iconos
+  categorias.forEach((cat, i) => {
+    const angulo = i * anguloPaso - Math.PI / 2;
+    const x = cx + (radioMax + 25) * Math.cos(angulo);
+    const y = cy + (radioMax + 25) * Math.sin(angulo);
+    svg.innerHTML += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="20">${cat.icono}</text>`;
   });
 }
 
-// Reiniciar valores
-function reiniciarGrafico() {
-  valores = [5, 5, 5, 5, 5];
-  crearGrafico(document.getElementById("nombreInput").value);
-}
-
-// Descargar imagen
-function descargarGrafico() {
-  const enlace = document.createElement('a');
-  enlace.href = chart.toBase64Image();
-  enlace.download = 'grafico.png';
-  enlace.click();
-}
-
-// Evento para actualizar nombre en tiempo real
-document.getElementById("nombreInput").addEventListener("input", function () {
-  crearGrafico(this.value);
+// Sliders dinámicos
+const slidersDiv = document.getElementById("sliders");
+categorias.forEach((cat, i) => {
+  const div = document.createElement("div");
+  div.className = "slider-block";
+  div.innerHTML = `<label for="slider-${i}">${cat.icono} ${cat.nombre}</label>
+    <input id="slider-${i}" type="range" min="0" max="10" value="${valores[i]}" step="1" oninput="actualizar(${i}, this.value)">`;
+  slidersDiv.appendChild(div);
 });
 
-crearGrafico();
+function actualizar(indice, valor) {
+  valores[indice] = parseInt(valor);
+  dibujar();
+}
+
+dibujar();
 </script>
 
 </body>
