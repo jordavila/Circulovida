@@ -247,27 +247,52 @@
     ctx.textBaseline = 'middle';
 
     categories.forEach((name, i) => {
-      const ang = angleFor(i);
-      const pOut = polarToXY(1, ang);
+  const ang = angleFor(i);
+  const { cx, cy, r } = geom();
 
-      ctx.strokeStyle = '#2a3280';
-      ctx.globalAlpha = 0.6;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(pOut.x, pOut.y);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
+  // Línea eje
+  const pOut = polarToXY(1, ang);
+  ctx.strokeStyle = '#2a3280';
+  ctx.globalAlpha = 0.6;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(pOut.x, pOut.y);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 
-      const labelRatio = 1.12;
-      const labelPos = polarToXY(labelRatio, ang);
-      ctx.save();
-      ctx.translate(labelPos.x, labelPos.y);
-      const angleDeg = ang * 180 / Math.PI;
-      ctx.rotate(ang + Math.PI / 2);
-      ctx.textAlign = angleDeg > 90 && angleDeg < 270 ? 'right' : 'left';
-      ctx.fillText(name, 0, 0);
-      ctx.restore();
-    });
+  // Texto radial, alineado para que el último carácter toque el borde exterior
+  const text = name;
+  ctx.save();
+  // Posicionar el texto en el punto donde termina el eje (en el borde)
+  ctx.translate(cx + Math.cos(ang) * (r + 10), cy + Math.sin(ang) * (r + 10));
+  
+  // Rotar para que el texto quede perpendicular al eje radial
+  // Si está en el lado izquierdo, girar 180 para que no quede al revés
+  let rotation = ang + Math.PI / 2;
+  if (rotation > Math.PI) rotation -= Math.PI * 2;
+  if (rotation < -Math.PI/2) rotation += Math.PI * 2;
+
+  if (rotation > Math.PI/2 || rotation < -Math.PI/2) {
+    ctx.rotate(rotation + Math.PI);
+    ctx.textAlign = 'right';
+  } else {
+    ctx.rotate(rotation);
+    ctx.textAlign = 'left';
+  }
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${Math.max(12, r * 0.07)}px system-ui`;
+  ctx.textBaseline = 'middle';
+
+  // Medir el ancho total del texto para desplazarlo hacia atrás, así el final queda en el borde
+  const textWidth = ctx.measureText(text).width;
+  ctx.translate(rotation > Math.PI/2 || rotation < -Math.PI/2 ? -textWidth : 0, 0);
+
+  // Dibujar texto completo (no en letras individuales, porque el texto es corto y legible así)
+  ctx.fillText(text, 0, 0);
+
+  ctx.restore();
+});
 
     // Polígono valores
     const pts = categories.map((_, i) => polarToXY(Math.max(0.1, values[i] / MAX), angleFor(i)));
