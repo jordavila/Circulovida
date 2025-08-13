@@ -1,28 +1,523 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ejercicio con Radar</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Círculo de la Vida - Programa Raiz Viva</title>
+<style>
+  :root {
+    --bg: #0f1220;
+    --panel: #141833;
+    --ink: #ffffff;
+    --line: #2a3280;
+    --accent: #6dd3ff;
+    --ok: #8ef6a0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 14px 12px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    user-select: none;
+  }
+  .banner {
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .banner img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .title {
+    text-align: center;
+    line-height: 1.25;
+  }
+  .title .l1 {
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    font-size: clamp(18px, 5vw, 26px);
+  }
+  .title .l2, .title .l3 {
+    font-weight: 600;
+    opacity: 0.95;
+    font-size: clamp(13px, 3.6vw, 18px);
+  }
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    margin-top: 6px;
+  }
+  @media (max-width: 560px) {
+    .controls {
+      grid-template-columns: 1fr;
+    }
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #26307a;
+    background: #0f1332;
+    color: var(--ink);
+    font-size: 16px;
+  }
+  button {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #2ba8ff;
+    background: linear-gradient(90deg, #2c5ef9, #2ba8ff);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background: linear-gradient(90deg, #2581e5, #2198f0);
+  }
+  .canvasbox {
+    width: 100%;
+    margin: 6px auto 4px;
+    touch-action: none; /* importante para drag en móvil */
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .note {
+    text-align: center;
+    opacity: 0.85;
+    font-size: 0.95rem;
+  }
+  .sliders {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .slider-container {
+    background: var(--panel);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+  }
+  .slider-container label {
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .slider-container input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: #25307a;
+    outline: none;
+    cursor: pointer;
+  }
+  .slider-container input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--ok);
+    cursor: pointer;
+    border: 2px solid #0e1330;
+    margin-top: -5px;
+  }
+  .slider-container input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--ok);
+    cursor: pointer;
+    border: 2px solid #0e1330;
+  }
+</style>
 </head>
 <body>
-  <header>
-    <img src="HEADER.jpg" alt="Encabezado" class="header-img" />
-  </header>
+  <div class="wrap" role="main" aria-label="Círculo de la Vida - Programa Raiz Viva">
+    <!-- HEADER.jpg -->
+    <div class="banner" aria-label="Encabezado">
+      <img id="headerImgEl" src="HEADER.jpg" alt="Encabezado del programa" />
+    </div>
 
-  <div class="controls">
-    <input type="text" id="nombre" placeholder="Ingresa tu nombre" />
-    <button id="reiniciar">Reiniciar</button>
-    <button id="descargar">Descargar</button>
+    <div class="title" aria-label="Título principal">
+      <div class="l1">CIRCULO DE LA VIDA</div>
+      <div class="l2">Programa Raiz Viva</div>
+      <div class="l3">by: Karen Valencia - Health Couch</div>
+    </div>
+
+    <div class="controls" aria-label="Controles principales">
+      <input id="nombre" type="text" placeholder="Nombre de la persona (obligatorio para descargar)" aria-label="Nombre de la persona" autocomplete="off" />
+      <button id="reset" aria-label="Reiniciar valores">Reiniciar</button>
+      <button id="download" aria-label="Descargar imagen del círculo de la vida">Descargar</button>
+    </div>
+
+    <div class="canvasbox" aria-label="Gráfico del círculo de la vida">
+      <canvas id="wheel" width="720" height="720" role="img" aria-describedby="note"></canvas>
+    </div>
+
+    <div class="note" id="note">Ajusta los valores con los sliders o arrastrando cada punto en el gráfico (1 = centro · 10 = borde)</div>
+
+    <div class="sliders" aria-label="Controles para ajustar valores">
+      <!-- sliders creados por JS -->
+    </div>
   </div>
 
-  <div class="chart-container">
-    <canvas id="radarChart"></canvas>
-  </div>
+<script>
+(() => {
+  const categories = [
+    'Salud', 'Finanzas', 'Carrera/Trabajo', 'Familia/Amigos',
+    'Amor/Pareja', 'Crecimiento Personal', 'Diversión/Ocio', 'Entorno/Hogar'
+  ];
+  const MAX = 10;
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.2/dist/chartjs-plugin-dragdata.min.js"></script>
-  <script src="script.js"></script>
+  // Valores iniciales NO cero para facilitar el toque/drag
+  const START_VALUE = 5;
+  const values = new Array(categories.length).fill(START_VALUE);
+  let draggingIndex = -1;
+
+  // Elementos DOM
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const slidersContainer = document.querySelector('.sliders');
+  const nombreInput = document.getElementById('nombre');
+  const headerImgEl = document.getElementById('headerImgEl');
+
+  // Preload de HEADER.jpg para la descarga
+  const headerImg = new Image();
+  headerImg.src = headerImgEl.src;
+  let headerLoaded = false;
+  headerImg.onload = () => headerLoaded = true;
+
+  // DPI y tamaño
+  function resizeCanvas() {
+    const vw = Math.min(window.innerWidth, 820) - 28;
+    const vh = window.innerHeight * 0.65;
+    const size = Math.max(300, Math.min(vw, vh));
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+
+  // Geometría para dibujo
+  const LABEL_PAD = 85;
+  function geom() {
+    const w = canvas.width / (window.devicePixelRatio || 1);
+    const h = canvas.height / (window.devicePixelRatio || 1);
+    const cx = w / 2;
+    const cy = h / 2 + 12;
+    const r = Math.min(w, h) / 2 - LABEL_PAD;
+    return { w, h, cx, cy, r };
+  }
+  function angleFor(i) {
+    return (Math.PI * 2 * i / categories.length) - Math.PI / 2;
+  }
+  function polarToXY(ratio, ang) {
+    const { cx, cy, r } = geom();
+    return { x: cx + Math.cos(ang) * r * ratio, y: cy + Math.sin(ang) * r * ratio };
+  }
+
+  // Dibujo
+  function draw() {
+    const { w, h, cx, cy, r } = geom();
+
+    // Fondo radial
+    const g = ctx.createRadialGradient(cx, cy, r * 0.05, cx, cy, r * 1.2);
+    g.addColorStop(0, '#161b3b');
+    g.addColorStop(1, '#0f1220');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+
+    // Anillos (niveles)
+    ctx.strokeStyle = '#25307a';
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= MAX; i++) {
+      ctx.globalAlpha = i % 5 === 0 ? 0.75 : 0.35;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * i / MAX, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Ejes radiales
+    categories.forEach((_, i) => {
+      const ang = angleFor(i);
+      const pOut = polarToXY(1, ang);
+      ctx.strokeStyle = '#2a3280';
+      ctx.globalAlpha = 0.8; // líneas más visibles
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(pOut.x, pOut.y);
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+
+    // Etiquetas de categorías (SIN transparencia)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${Math.max(12, r * 0.07)}px system-ui`;
+    ctx.textBaseline = 'middle';
+    categories.forEach((name, i) => {
+      const ang = angleFor(i);
+      const labelRatio = 1.12;
+      const labelPos = polarToXY(labelRatio, ang);
+      ctx.save();
+      ctx.translate(labelPos.x, labelPos.y);
+      ctx.rotate(ang + Math.PI / 2);
+      // Alineación hacia fuera como en el original
+      const angleDeg = ang * 180 / Math.PI;
+      ctx.textAlign = angleDeg > 90 && angleDeg < 270 ? 'right' : 'left';
+      ctx.fillText(name, 0, 0);
+      ctx.restore();
+    });
+
+    // Polígono de valores
+    const pts = categories.map((_, i) => polarToXY(Math.max(0.1, values[i] / MAX), angleFor(i)));
+    ctx.beginPath();
+    pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(109, 211, 255, 0.22)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#6dd3ff';
+    ctx.stroke();
+
+    // Puntos arrastrables
+    pts.forEach((p) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#8ef6a0';
+      ctx.fill();
+      ctx.strokeStyle = '#0e1330';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    // Marca de agua con el NOMBRE (transparente)
+    const nombre = nombreInput.value.trim();
+    if (nombre) {
+      ctx.save();
+      ctx.globalAlpha = 0.12; // transparencia tipo “marca de agua”
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `800 ${Math.max(18, r * 0.22)}px system-ui`;
+      ctx.translate(cx, cy);
+      ctx.rotate(-Math.PI / 12); // leve inclinación
+      ctx.fillText(nombre, 0, 0);
+      ctx.restore();
+    }
+  }
+
+  // Interacción puntero (drag dentro del gráfico)
+  function pointerXY(evt) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+  }
+  function nearestAxisIndex(x, y) {
+    const { cx, cy } = geom();
+    const dx = x - cx, dy = y - cy;
+    let ang = Math.atan2(dy, dx) + Math.PI / 2;
+    if (ang < 0) ang += Math.PI * 2;
+    const seg = (Math.PI * 2) / categories.length;
+    return Math.round(ang / seg) % categories.length;
+  }
+  function valueAlongAxisFromXY(index, x, y) {
+    const { cx, cy, r } = geom();
+    const ang = angleFor(index);
+    const ax = Math.cos(ang), ay = Math.sin(ang);
+    const vx = x - cx, vy = y - cy;
+    const t = vx * ax + vy * ay;
+    const ratio = Math.max(0, Math.min(1, t / r));
+    return Math.max(1, Math.min(10, Math.round(ratio * MAX)));
+  }
+  function hitPointIndex(x, y) {
+    for (let i = 0; i < categories.length; i++) {
+      const p = polarToXY(Math.max(0.1, values[i] / MAX), angleFor(i));
+      if (Math.hypot(x - p.x, y - p.y) <= 14) return i;
+    }
+    return -1;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    const { x, y } = pointerXY(e);
+    const hit = hitPointIndex(x, y);
+    if (hit >= 0) {
+      draggingIndex = hit;
+    } else {
+      const idx = nearestAxisIndex(x, y);
+      values[idx] = valueAlongAxisFromXY(idx, x, y);
+      updateSliders();
+      draw();
+    }
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (draggingIndex < 0) return;
+    const { x, y } = pointerXY(e);
+    values[draggingIndex] = valueAlongAxisFromXY(draggingIndex, x, y);
+    updateSliders();
+    draw();
+  });
+  window.addEventListener('pointerup', () => { draggingIndex = -1; });
+  window.addEventListener('pointercancel', () => { draggingIndex = -1; });
+
+  // Sliders
+  function createSliders() {
+    slidersContainer.innerHTML = '';
+    categories.forEach((cat, i) => {
+      const container = document.createElement('div');
+      container.className = 'slider-container';
+
+      const label = document.createElement('label');
+      label.htmlFor = 'slider-' + i;
+      label.textContent = `${cat}: ${values[i]}`;
+      container.appendChild(label);
+
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.min = 1;
+      slider.max = MAX;
+      slider.value = values[i];
+      slider.id = 'slider-' + i;
+      slider.setAttribute('aria-valuemin', '1');
+      slider.setAttribute('aria-valuemax', MAX.toString());
+      slider.setAttribute('aria-valuenow', values[i]);
+      slider.setAttribute('aria-label', cat + ' valor');
+      container.appendChild(slider);
+
+      slider.addEventListener('input', (e) => {
+        values[i] = Number(e.target.value);
+        label.textContent = `${cat}: ${values[i]}`;
+        draw();
+      });
+
+      slidersContainer.appendChild(container);
+    });
+  }
+  function updateSliders() {
+    categories.forEach((cat, i) => {
+      const slider = document.getElementById('slider-' + i);
+      const label = slider?.previousSibling;
+      if (slider && Number(slider.value) !== values[i]) {
+        slider.value = values[i];
+        if (label && label.nodeType === Node.ELEMENT_NODE) {
+          label.textContent = `${cat}: ${values[i]}`;
+        }
+      }
+    });
+  }
+
+  // Botón Reiniciar (vuelve a START_VALUE)
+  document.getElementById('reset').addEventListener('click', () => {
+    for (let i = 0; i < values.length; i++) values[i] = START_VALUE;
+    updateSliders();
+    draw();
+  });
+
+  // Descargar PNG con HEADER.jpg + gráfico + nombre
+  document.getElementById('download').addEventListener('click', () => {
+    const nombre = nombreInput.value.trim();
+    if (!nombre) {
+      alert('Por favor ingresa el nombre (obligatorio) antes de descargar.');
+      nombreInput.focus();
+      return;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const baseW = canvas.width / dpr;
+    const baseH = canvas.height / dpr;
+
+    // Altura del header según su proporción (fallback si aún no cargó)
+    let headerH;
+    if (headerLoaded && headerImg.naturalWidth > 0) {
+      headerH = Math.round(baseW * (headerImg.naturalHeight / headerImg.naturalWidth));
+    } else {
+      headerH = Math.round(baseH * 0.25); // fallback razonable
+    }
+
+    const footerH = Math.round(baseH * 0.13);
+
+    const out = document.createElement('canvas');
+    out.width = Math.round(baseW * dpr);
+    out.height = Math.round((headerH + baseH + footerH) * dpr);
+    const octx = out.getContext('2d');
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Fondo
+    octx.fillStyle = '#0f1220';
+    octx.fillRect(0, 0, out.width, out.height);
+
+    // Dibujar header si está disponible
+    if (headerLoaded) {
+      octx.drawImage(headerImg, 0, 0, baseW, headerH);
+    } else {
+      // Placeholder si no cargó (degradado)
+      const grad = octx.createLinearGradient(0, 0, baseW, headerH);
+      grad.addColorStop(0, '#1a214f');
+      grad.addColorStop(1, '#0f1220');
+      octx.fillStyle = grad;
+      octx.fillRect(0, 0, baseW, headerH);
+    }
+
+    // Dibujar el gráfico actual (ya incluye marca de agua con el nombre)
+    octx.drawImage(canvas, 0, headerH, baseW, baseH);
+
+    // Nombre en el footer (legible)
+    const cx = baseW / 2;
+    octx.font = '700 ' + Math.max(14, Math.round(baseW * 0.045)) + 'px system-ui';
+    octx.fillStyle = '#8ef6a0';
+    octx.textAlign = 'center';
+    octx.fillText(nombre, cx, headerH + baseH + footerH * 0.6);
+
+    // Guardar PNG con nombre personalizado
+    const safeName = nombre.replace(/\s+/g, '_').replace(/[^\w_-]/g, '');
+    out.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Circulo_de_la_Vida_${safeName}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  });
+
+  // Redibuja cuando cambie el nombre (marca de agua)
+  nombreInput.addEventListener('input', draw);
+
+  // Inicialización
+  createSliders();
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  draw();
+
+  // Sincronizar sliders y gráfico cuando cambian valores
+  slidersContainer.addEventListener('input', () => {
+    draw();
+  });
+})();
+</script>
 </body>
 </html>
