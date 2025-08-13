@@ -1,496 +1,194 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Círculo de la Vida - Programa Raiz Viva</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Círculo de la Vida</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  :root {
-    --bg: #0f1220;
-    --panel: #141833;
-    --ink: #ffffff;
-    --line: #2a3280;
-    --accent: #6dd3ff;
-    --ok: #8ef6a0;
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 10px;
+    background: #fdfdfd;
   }
-  * {
-    box-sizing: border-box;
+  canvas {
+    max-width: 100%;
+    height: auto;
   }
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  }
-  .wrap {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 14px 12px 22px;
+  .slider-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    user-select: none;
-  }
-  .title {
-    text-align: center;
-    line-height: 1.25;
-  }
-  .title .l1 {
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    font-size: clamp(18px, 5vw, 26px);
-  }
-  .title .l2, .title .l3 {
-    font-weight: 600;
-    opacity: 0.95;
-    font-size: clamp(13px, 3.6vw, 18px);
-  }
-  .controls {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
     align-items: center;
-    margin-top: 6px;
+    margin: 5px 0;
   }
-  @media (max-width: 520px) {
-    .controls {
-      grid-template-columns: 1fr;
-    }
+  .slider-container label {
+    font-size: 14px;
+    margin-bottom: 3px;
   }
-  input[type="text"] {
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid #26307a;
-    background: #0f1332;
-    color: var(--ink);
+  input[type="range"] {
+    width: 90%;
+  }
+  #nameInput {
+    width: 90%;
+    padding: 5px;
+    margin: 10px 0;
     font-size: 16px;
   }
   button {
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid #2ba8ff;
-    background: linear-gradient(90deg, #2c5ef9, #2ba8ff);
-    color: #fff;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  button:hover {
-    background: linear-gradient(90deg, #2581e5, #2198f0);
-  }
-  .canvasbox {
-    width: 100%;
-    margin: 6px auto 4px;
-    touch-action: none;
-  }
-  canvas {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  .note {
-    text-align: center;
-    opacity: 0.8;
-    font-size: 0.9rem;
-  }
-  .sliders {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
-    gap: 12px;
-    margin-top: 14px;
-  }
-  .slider-container {
-    background: var(--panel);
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-    user-select: none;
-  }
-  .slider-container label {
-    margin-bottom: 6px;
-    text-align: center;
-  }
-  .slider-container input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 8px;
+    padding: 8px 16px;
+    font-size: 16px;
+    margin-top: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
     border-radius: 5px;
-    background: #25307a;
-    outline: none;
-    cursor: pointer;
-  }
-  .slider-container input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--ok);
-    cursor: pointer;
-    border: 2px solid #0e1330;
-    margin-top: -5px;
-  }
-  .slider-container input[type=range]::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--ok);
-    cursor: pointer;
-    border: 2px solid #0e1330;
   }
 </style>
 </head>
 <body>
-  <div class="wrap" role="main" aria-label="Círculo de la Vida - Programa Raiz Viva">
 
-    <div class="title" aria-label="Título principal">
-      <div class="l1">CIRCULO DE LA VIDA</div>
-      <div class="l2">Programa Raiz Viva</div>
-      <div class="l3">by: Karen Valencia - Health Couch</div>
-    </div>
+<h2>CIRCULO DE LA VIDA<br>Programa Raiz Viva<br>by: Karen Valencia - Health Coach</h2>
 
-    <div class="controls">
-      <input id="nombre" type="text" placeholder="Nombre de la persona" aria-label="Nombre de la persona" autocomplete="off" />
-      <button id="download" aria-label="Descargar imagen del círculo de la vida">Descargar</button>
-    </div>
+<input type="text" id="nameInput" placeholder="Ingresa tu nombre">
 
-    <div class="canvasbox" aria-label="Gráfico del círculo de la vida">
-      <canvas id="wheel" width="720" height="720" role="img" aria-describedby="note"></canvas>
-    </div>
+<canvas id="myChart"></canvas>
 
-    <div class="note" id="note">Toca o arrastra los puntos para cambiar los valores (1 = centro · 10 = borde)</div>
+<div id="sliders"></div>
 
-    <div class="sliders" aria-label="Controles para ajustar valores">
-      <!-- sliders creados por JS -->
-    </div>
-  </div>
+<button id="downloadBtn">Descargar PNG</button>
 
 <script>
-(() => {
-  const categories = [
-    'Salud', 'Finanzas', 'Laboral', 'Familia', 'Amigos',
-    'Amor', 'Crecimiento', 'Diversión', 'Hogar'
-  ];
-  const MAX = 10;
+const categorias = [
+  "Salud física", "Finanzas", "Carrera/Negocio", "Entorno físico",
+  "Amigos/Familia", "Diversión", "Desarrollo personal", "Espiritualidad"
+];
 
-  // Estado
-  const values = new Array(categories.length).fill(5);
-  let draggingIndex = -1;
+let valores = new Array(categorias.length).fill(5);
 
-  // Elementos DOM
-  const canvas = document.getElementById('wheel');
-  const ctx = canvas.getContext('2d');
-  const slidersContainer = document.querySelector('.sliders');
-  const nombreInput = document.getElementById('nombre');
+const ctx = document.getElementById('myChart').getContext('2d');
 
-  // DPI y tamaño
-  function resizeCanvas() {
-    const vw = Math.min(window.innerWidth, 820) - 28;
-    const vh = window.innerHeight * 0.65;
-    const size = Math.max(300, Math.min(vw, vh));
-    const dpr = window.devicePixelRatio || 1;
-
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    canvas.style.width = size + 'px';
-    canvas.style.height = size + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    draw();
-  }
-
-  // Geometría para dibujo
-  const LABEL_PAD = 85;
-  function geom() {
-    const w = canvas.width / (window.devicePixelRatio || 1);
-    const h = canvas.height / (window.devicePixelRatio || 1);
-    const cx = w / 2;
-    const cy = h / 2 + 12;
-    const r = Math.min(w, h) / 2 - LABEL_PAD;
-    return { w, h, cx, cy, r };
-  }
-  function angleFor(i) {
-    return (Math.PI * 2 * i / categories.length) - Math.PI / 2;
-  }
-  function polarToXY(ratio, ang) {
-    const { cx, cy, r } = geom();
-    return { x: cx + Math.cos(ang) * r * ratio, y: cy + Math.sin(ang) * r * ratio };
-  }
-
-  // Dibujo
-  function draw() {
-    const { w, h, cx, cy, r } = geom();
-
-    // Fondo radial
-    const g = ctx.createRadialGradient(cx, cy, r * 0.05, cx, cy, r * 1.2);
-    g.addColorStop(0, '#161b3b');
-    g.addColorStop(1, '#0f1220');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-
-    // Anillos
-    ctx.strokeStyle = '#25307a';
-    ctx.lineWidth = 1;
-    for (let i = 1; i <= MAX; i++) {
-      ctx.globalAlpha = i % 5 === 0 ? 0.75 : 0.35;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * i / MAX, 0, Math.PI * 2);
-      ctx.stroke();
+const chart = new Chart(ctx, {
+  type: 'radar',
+  data: {
+    labels: categorias,
+    datasets: [{
+      label: 'Nivel',
+      data: valores,
+      fill: true,
+      backgroundColor: 'rgba(0,123,255,0.2)',
+      borderColor: '#007bff',
+      pointBackgroundColor: '#007bff',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: '#007bff'
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        suggestedMin: 0,
+        suggestedMax: 10,
+        ticks: {
+          stepSize: 1,
+          backdropColor: 'transparent'
+        },
+        pointLabels: {
+          display: false // Ocultamos para dibujar manualmente
+        }
+      }
+    },
+    onClick: (e) => {
+      const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+      if (points.length) {
+        const index = points[0].index;
+        valores[index] = (valores[index] + 1) % 11;
+        chart.update();
+        document.getElementById(`slider-${index}`).value = valores[index];
+      }
+    },
+    plugins: {
+      legend: { display: false }
     }
-    ctx.globalAlpha = 1;
-
-    // Ejes y etiquetas con rotación para texto
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.max(12, r * 0.07)}px system-ui`;
-    ctx.textBaseline = 'middle';
-
-    categories.forEach((name, i) => {
-  const ang = angleFor(i);
-  const { cx, cy, r } = geom();
-
-  // Línea eje
-  const pOut = polarToXY(1, ang);
-  ctx.strokeStyle = '#2a3280';
-  ctx.globalAlpha = 0.6;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(pOut.x, pOut.y);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  // Texto radial, alineado para que el último carácter toque el borde exterior
-  const text = name;
-  ctx.save();
-  // Posicionar el texto en el punto donde termina el eje (en el borde)
-  ctx.translate(cx + Math.cos(ang) * (r + 10), cy + Math.sin(ang) * (r + 10));
-  
-  // Rotar para que el texto quede perpendicular al eje radial
-  // Si está en el lado izquierdo, girar 180 para que no quede al revés
-  let rotation = ang + Math.PI / 2;
-  if (rotation > Math.PI) rotation -= Math.PI * 2;
-  if (rotation < -Math.PI/2) rotation += Math.PI * 2;
-
-  if (rotation > Math.PI/2 || rotation < -Math.PI/2) {
-    ctx.rotate(rotation + Math.PI);
-    ctx.textAlign = 'right';
-  } else {
-    ctx.rotate(rotation);
-    ctx.textAlign = 'left';
-  }
-  
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `bold ${Math.max(12, r * 0.07)}px system-ui`;
-  ctx.textBaseline = 'middle';
-
-  // Medir el ancho total del texto para desplazarlo hacia atrás, así el final queda en el borde
-  const textWidth = ctx.measureText(text).width;
-  ctx.translate(rotation > Math.PI/2 || rotation < -Math.PI/2 ? -textWidth : 0, 0);
-
-  // Dibujar texto completo (no en letras individuales, porque el texto es corto y legible así)
-  ctx.fillText(text, 0, 0);
-
-  ctx.restore();
+  },
+  plugins: [{
+    id: 'radialLabels',
+    afterDraw(chart) {
+      const { ctx, chartArea: { width, height }, scales: { r } } = chart;
+      ctx.save();
+      ctx.font = '12px Arial';
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      categorias.forEach((label, i) => {
+        const angle = r.getIndexAngle(i) - Math.PI / 2;
+        const radius = r.drawingArea + 20;
+        const x = r.xCenter + Math.cos(angle) * radius;
+        const y = r.yCenter + Math.sin(angle) * radius;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle + Math.PI / 2);
+        ctx.fillText(label, 0, 0);
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+  }]
 });
 
-    // Polígono valores
-    const pts = categories.map((_, i) => polarToXY(Math.max(0.1, values[i] / MAX), angleFor(i)));
-    ctx.beginPath();
-    pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(109, 211, 255, 0.22)';
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#6dd3ff';
-    ctx.stroke();
-
-    // Puntos arrastrables
-    pts.forEach((p) => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-      ctx.fillStyle = '#8ef6a0';
-      ctx.fill();
-      ctx.strokeStyle = '#0e1330';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    });
-  }
-
-  // Interacción puntero
-  function pointerXY(evt) {
-    const rect = canvas.getBoundingClientRect();
-    return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
-  }
-  function nearestAxisIndex(x, y) {
-    const { cx, cy } = geom();
-    const dx = x - cx, dy = y - cy;
-    let ang = Math.atan2(dy, dx) + Math.PI / 2;
-    if (ang < 0) ang += Math.PI * 2;
-    const seg = (Math.PI * 2) / categories.length;
-    return Math.round(ang / seg) % categories.length;
-  }
-  function valueAlongAxisFromXY(index, x, y) {
-    const { cx, cy, r } = geom();
-    const ang = angleFor(index);
-    const ax = Math.cos(ang), ay = Math.sin(ang);
-    const vx = x - cx, vy = y - cy;
-    const t = vx * ax + vy * ay;
-    const ratio = Math.max(0, Math.min(1, t / r));
-    return Math.max(1, Math.min(10, Math.round(ratio * MAX)));
-  }
-  function hitPointIndex(x, y) {
-    for (let i = 0; i < categories.length; i++) {
-      const p = polarToXY(Math.max(0.1, values[i] / MAX), angleFor(i));
-      if (Math.hypot(x - p.x, y - p.y) <= 14) return i;
-    }
-    return -1;
-  }
-
-  // Eventos para drag
-  canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture(e.pointerId);
-    const { x, y } = pointerXY(e);
-    const hit = hitPointIndex(x, y);
-    if (hit >= 0) {
-      draggingIndex = hit;
-    } else {
-      const idx = nearestAxisIndex(x, y);
-      values[idx] = valueAlongAxisFromXY(idx, x, y);
-      updateSliders();
-      draw();
-    }
+// Crear sliders
+const slidersDiv = document.getElementById('sliders');
+categorias.forEach((cat, i) => {
+  const container = document.createElement('div');
+  container.classList.add('slider-container');
+  const label = document.createElement('label');
+  label.textContent = cat;
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.min = 0;
+  slider.max = 10;
+  slider.value = valores[i];
+  slider.id = `slider-${i}`;
+  slider.addEventListener('input', (e) => {
+    valores[i] = Number(e.target.value);
+    chart.data.datasets[0].data = valores;
+    chart.update();
   });
-  canvas.addEventListener('pointermove', (e) => {
-    if (draggingIndex < 0) return;
-    const { x, y } = pointerXY(e);
-    values[draggingIndex] = valueAlongAxisFromXY(draggingIndex, x, y);
-    updateSliders();
-    draw();
-  });
-  window.addEventListener('pointerup', () => {
-    draggingIndex = -1;
-  });
-  window.addEventListener('pointercancel', () => {
-    draggingIndex = -1;
-  });
+  container.appendChild(label);
+  container.appendChild(slider);
+  slidersDiv.appendChild(container);
+});
 
-  // Crear sliders y sincronizar con valores
-  function createSliders() {
-    categories.forEach((cat, i) => {
-      const container = document.createElement('div');
-      container.className = 'slider-container';
+// Descargar PNG
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const nombre = document.getElementById('nameInput').value.trim();
+  const canvas = document.createElement('canvas');
+  const ctx2 = canvas.getContext('2d');
+  const originalCanvas = document.getElementById('myChart');
 
-      const label = document.createElement('label');
-      label.htmlFor = 'slider-' + i;
-      label.textContent = cat;
-      container.appendChild(label);
+  canvas.width = originalCanvas.width;
+  canvas.height = originalCanvas.height + 60;
 
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.min = 1;
-      slider.max = MAX;
-      slider.value = values[i];
-      slider.id = 'slider-' + i;
-      slider.setAttribute('aria-valuemin', '1');
-      slider.setAttribute('aria-valuemax', MAX.toString());
-      slider.setAttribute('aria-valuenow', values[i]);
-      slider.setAttribute('aria-label', cat + ' valor');
-      container.appendChild(slider);
+  ctx2.fillStyle = '#fff';
+  ctx2.fillRect(0, 0, canvas.width, canvas.height);
 
-      slider.addEventListener('input', (e) => {
-        values[i] = Number(e.target.value);
-        draw();
-      });
+  ctx2.font = '20px Arial';
+  ctx2.fillStyle = '#000';
+  ctx2.textAlign = 'center';
+  ctx2.fillText("CIRCULO DE LA VIDA - Programa Raiz Viva", canvas.width / 2, 25);
+  ctx2.fillText("by: Karen Valencia - Health Coach", canvas.width / 2, 50);
+  if (nombre) ctx2.fillText(`Participante: ${nombre}`, canvas.width / 2, canvas.height - 20);
 
-      slidersContainer.appendChild(container);
-    });
-  }
+  ctx2.drawImage(originalCanvas, 0, 60);
 
-  // Actualizar sliders cuando cambian desde el gráfico
-  function updateSliders() {
-    categories.forEach((_, i) => {
-      const slider = document.getElementById('slider-' + i);
-      if (slider && Number(slider.value) !== values[i]) {
-        slider.value = values[i];
-      }
-    });
-  }
-
-  // Descargar PNG con encabezado y nombre
-  document.getElementById('download').addEventListener('click', () => {
-    const nombre = nombreInput.value.trim();
-    if (!nombre) {
-      alert('Por favor ingresa el nombre para incluirlo en la imagen.');
-      nombreInput.focus();
-      return;
-    }
-
-    const dpr = window.devicePixelRatio || 1;
-    const baseW = canvas.width / dpr;
-    const baseH = canvas.height / dpr;
-
-    // Espacio extra para encabezado y nombre
-    const headerH = Math.round(baseH * 0.24);
-    const footerH = Math.round(baseH * 0.13);
-    const out = document.createElement('canvas');
-    out.width = canvas.width;
-    out.height = Math.floor((headerH + baseH + footerH) * dpr);
-    const octx = out.getContext('2d');
-    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    // Fondo
-    octx.fillStyle = '#0f1220';
-    octx.fillRect(0, 0, out.width, out.height);
-
-    // Título (3 líneas)
-    const cx = baseW / 2;
-    let ty = 24;
-    octx.textAlign = 'center';
-    octx.fillStyle = '#ffffff';
-
-    octx.font = '800 ' + Math.max(16, Math.round(baseW * 0.06)) + 'px system-ui';
-    octx.fillText('CIRCULO DE LA VIDA', cx, ty + 8 + Math.max(16, Math.round(baseW * 0.06)) * 0.8);
-
-    octx.font = '600 ' + Math.max(12, Math.round(baseW * 0.035)) + 'px system-ui';
-    ty += Math.max(28, Math.round(baseW * 0.09));
-    octx.fillText('Programa Raiz Viva', cx, ty);
-    ty += Math.max(26, Math.round(baseW * 0.07));
-    octx.fillText('by: Karen Valencia - Health Couch', cx, ty);
-
-    // Gráfico debajo, desplazado para dejar espacio arriba
-    octx.drawImage(canvas, 0, headerH, baseW, baseH);
-
-    // Nombre en footer
-    octx.font = '600 ' + Math.max(12, Math.round(baseW * 0.035)) + 'px system-ui';
-    octx.fillStyle = '#8ef6a0';
-    octx.fillText(nombre, cx, headerH + baseH + footerH * 0.6);
-
-    // Guardar PNG con nombre personalizado
-    const safeName = nombre.replace(/\s+/g, '_').replace(/[^\w_-]/g, '');
-    out.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Circulo_de_la_Vida_${safeName}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }, 'image/png');
-  });
-
-  // Inicialización
-  createSliders();
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  draw();
-
-  // Sincronizar sliders y gráfico cuando cambian valores
-  slidersContainer.addEventListener('input', () => {
-    draw();
-  });
-})();
+  const link = document.createElement('a');
+  link.download = 'circulo_de_la_vida.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
 </script>
+
 </body>
 </html>
