@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Círculo de la Vida con Iconos</title>
 <style>
   body {
@@ -9,10 +10,15 @@
     color: white;
     font-family: sans-serif;
     text-align: center;
-    margin-top: 30px;
+    margin: 20px;
   }
   svg {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
     background: transparent;
+    display: block;
+    margin: 0 auto;
   }
   .slider-container {
     margin-top: 20px;
@@ -30,14 +36,37 @@
   input[type="range"] {
     width: 100%;
   }
+  label {
+    font-size: 1rem;
+    margin-bottom: 6px;
+    user-select: none;
+  }
+
+  @media (max-width: 480px) {
+    .slider-container {
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+    .slider-block {
+      width: 80%;
+      max-width: 300px;
+    }
+    label {
+      font-size: 1.1rem;
+    }
+    svg text {
+      font-size: 16px !important;
+    }
+  }
 </style>
 </head>
 <body>
 
 <h2>Círculo de la Vida</h2>
-<svg id="circleChart" width="500" height="500" viewBox="0 0 500 500"></svg>
+<svg id="circleChart" viewBox="0 0 500 500" aria-label="Círculo de la vida con iconos" role="img"></svg>
 
-<div class="slider-container" id="sliders"></div>
+<div class="slider-container" id="sliders" aria-label="Controles para ajustar valores"></div>
 
 <script>
 const categorias = [
@@ -61,7 +90,7 @@ function dibujar() {
 
   const anguloPaso = (2 * Math.PI) / categorias.length;
   
-  // Dibujar líneas radiales
+  // Líneas radiales
   categorias.forEach((cat, i) => {
     const angulo = i * anguloPaso - Math.PI / 2;
     const x = cx + radioMax * Math.cos(angulo);
@@ -69,7 +98,7 @@ function dibujar() {
     svg.innerHTML += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#555"/>`;
   });
 
-  // Dibujar polígono
+  // Polígono valores
   let puntos = "";
   categorias.forEach((cat, i) => {
     const angulo = i * anguloPaso - Math.PI / 2;
@@ -80,22 +109,22 @@ function dibujar() {
   });
   svg.innerHTML += `<polygon points="${puntos}" fill="rgba(105,201,185,0.4)" stroke="#69c9b9" stroke-width="2"/>`;
 
-  // Dibujar iconos
+  // Iconos
   categorias.forEach((cat, i) => {
     const angulo = i * anguloPaso - Math.PI / 2;
-    const x = cx + (radioMax + 20) * Math.cos(angulo);
-    const y = cy + (radioMax + 20) * Math.sin(angulo);
+    const x = cx + (radioMax + 25) * Math.cos(angulo);
+    const y = cy + (radioMax + 25) * Math.sin(angulo);
     svg.innerHTML += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="20">${cat.icono}</text>`;
   });
 }
 
-// Sliders
+// Sliders dinámicos
 const slidersDiv = document.getElementById("sliders");
 categorias.forEach((cat, i) => {
   const div = document.createElement("div");
   div.className = "slider-block";
-  div.innerHTML = `<label>${cat.icono} ${cat.nombre}</label>
-    <input type="range" min="0" max="10" value="${valores[i]}" step="1" oninput="actualizar(${i}, this.value)">`;
+  div.innerHTML = `<label for="slider-${i}">${cat.icono} ${cat.nombre}</label>
+    <input id="slider-${i}" type="range" min="0" max="10" value="${valores[i]}" step="1" oninput="actualizar(${i}, this.value)">`;
   slidersDiv.appendChild(div);
 });
 
