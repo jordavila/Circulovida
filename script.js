@@ -74,7 +74,7 @@ function drawWheel() {
     ctx.font = "bold 11px Segoe UI";
     ctx.translate(centerX, centerY);
     ctx.rotate(angle);
-    ctx.textAlign = "Right";
+    ctx.textAlign = "right";
     ctx.fillText(cat.name, radius, 1);
     ctx.restore();
   });
