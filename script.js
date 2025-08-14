@@ -4,14 +4,19 @@
 
 // Categorías y valores iniciales
 const categories = [
-  { name: "Salud", value: 5 },
-  { name: "Carrera", value: 5 },
-  { name: "Finanzas", value: 5 },
-  { name: "Familia", value: 5 },
-  { name: "Amigos", value: 5 },
-  { name: "Diversión", value: 5 },
-  { name: "Crecimiento", value: 5 },
-  { name: "Aportar", value: 5 }
+  { name: "ESPIRITUALIDAD", value: 5 },
+  { name: "GESTION ESTRES", value: 5 },
+  { name: "FINANZAS", value: 5 },
+  { name: "VIDA LABORAL", value: 5 },
+  { name: "EDUCACION", value: 5 },
+  { name: "ENTORNO", value: 5 },
+  { name: "SALUD", value: 5 },
+  { name: "ACTIVIDAD FISICA", value: 5 },
+  { name: "VIDA SOCIAL", value: 5 },
+  { name: "COCINA", value: 5 },
+  { name: "RELACIONES", value: 5 },
+  { name: "CREATIVIDAD", value: 5 },
+  { name: "EMOCIONES", value: 5 }
 ];
 
 // Elementos del DOM
@@ -65,7 +70,7 @@ function drawWheel() {
     ctx.stroke();
 
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.font = "bold 14px Segoe UI";
     ctx.translate(centerX, centerY);
     ctx.rotate(angle);
@@ -242,7 +247,7 @@ downloadBtn.addEventListener("click", () => {
     tempCtx.drawImage(headerImg, 0, 0, tempCanvas.width, headerHeight);
 
     // Dibujar título
-    tempCtx.font = "bold 28px Segoe UI";
+    tempCtx.font = "bold 16px Segoe UI";
     tempCtx.fillStyle = "#0f111e";
     tempCtx.textAlign = "center";
     tempCtx.textBaseline = "middle";
@@ -254,7 +259,7 @@ downloadBtn.addEventListener("click", () => {
     // Añadir fecha y hora en la esquina inferior derecha
     const now = new Date();
     const fechaHora = now.toLocaleString();
-    tempCtx.font = "14px Segoe UI";
+    tempCtx.font = "8px Segoe UI";
     tempCtx.fillStyle = "rgba(0,0,0,0.6)";
     tempCtx.textAlign = "right";
     tempCtx.textBaseline = "bottom";
