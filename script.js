@@ -71,7 +71,7 @@ function drawWheel() {
 
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.font = "bold 14px Segoe UI";
+    ctx.font = "bold 11px Segoe UI";
     ctx.translate(centerX, centerY);
     ctx.rotate(angle);
     ctx.textAlign = "Right";
