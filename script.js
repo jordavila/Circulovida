@@ -16,7 +16,7 @@ const categories = [
   { name: "COCINA", value: 5 },
   { name: "RELACIONES", value: 5 },
   { name: "CREATIVIDAD", value: 5 },
-  { name: "GESTION DE EMOCIONES", value: 5 }
+  { name: "GESTION EMOCIONES", value: 5 }
 ];
 
 // Elementos del DOM
@@ -71,7 +71,7 @@ function drawWheel() {
 
     ctx.save();
     ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.font = "bold 11px Segoe UI";
+    ctx.font = "bold 10px Segoe UI";
     ctx.translate(centerX, centerY);
     ctx.rotate(angle);
     ctx.textAlign = "right";
@@ -90,9 +90,9 @@ function drawWheel() {
     else ctx.lineTo(x, y);
   });
   ctx.closePath();
-  ctx.fillStyle = "rgba(105, 201, 185, 0.4)";
+  ctx.fillStyle = "rgba(227, 113, 182, 0.4)";
   ctx.fill();
-  ctx.strokeStyle = "#69c9b9";
+  ctx.strokeStyle = "#E371B6";
   ctx.stroke();
 
   // Nombre en el centro (transparente)
