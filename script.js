@@ -251,7 +251,7 @@ downloadBtn.addEventListener("click", () => {
     tempCtx.fillStyle = "#0f111e";
     tempCtx.textAlign = "center";
     tempCtx.textBaseline = "middle";
-    tempCtx.fillText("Círculo de la Vida", tempCanvas.width / 2, headerHeight + titleHeight / 2);
+    tempCtx.fillText("Tu Círculo de la Vida", tempCanvas.width / 2, headerHeight + titleHeight / 2);
 
     // Dibujar el canvas principal debajo del título
     tempCtx.drawImage(canvas, 0, headerHeight + titleHeight);
@@ -259,7 +259,7 @@ downloadBtn.addEventListener("click", () => {
     // Añadir fecha y hora en la esquina inferior derecha
     const now = new Date();
     const fechaHora = now.toLocaleString();
-    tempCtx.font = "14px Segoe UI";
+    tempCtx.font = "12px Segoe UI";
     tempCtx.fillStyle = "rgba(0,0,0,0.6)";
     tempCtx.textAlign = "right";
     tempCtx.textBaseline = "bottom";
