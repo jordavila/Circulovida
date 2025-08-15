@@ -4,7 +4,7 @@
 
 // Categorías y valores iniciales
 const categories = [
-  { name: "Espiritualidad", value: 5 },
+  { name: "espiritualidad", value: 5 },
   { name: "gestión estrés", value: 5 },
   { name: "finanzas", value: 5 },
   { name: "vida laboral", value: 5 },
