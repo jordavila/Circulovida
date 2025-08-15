@@ -4,19 +4,19 @@
 
 // Categorías y valores iniciales
 const categories = [
-  { name: "ESPIRITUALIDAD", value: 5 },
-  { name: "GESTION ESTRES", value: 5 },
-  { name: "FINANZAS", value: 5 },
-  { name: "VIDA LABORAL", value: 5 },
-  { name: "EDUCACION", value: 5 },
-  { name: "ENTORNO", value: 5 },
-  { name: "SALUD", value: 5 },
-  { name: "ACTIVIDAD FISICA", value: 5 },
-  { name: "VIDA SOCIAL", value: 5 },
-  { name: "COCINA", value: 5 },
-  { name: "RELACIONES", value: 5 },
-  { name: "CREATIVIDAD", value: 5 },
-  { name: "GESTION EMOCIONES", value: 5 }
+  { name: "Espiritualidad", value: 5 },
+  { name: "gestión estrés", value: 5 },
+  { name: "finanzas", value: 5 },
+  { name: "vida laboral", value: 5 },
+  { name: "educación", value: 5 },
+  { name: "entorno", value: 5 },
+  { name: "salud", value: 5 },
+  { name: "actividad física", value: 5 },
+  { name: "vida social", value: 5 },
+  { name: "cocina", value: 5 },
+  { name: "relaciones", value: 5 },
+  { name: "creatividad", value: 5 },
+  { name: "emociones", value: 5 }
 ];
 
 // Elementos del DOM
@@ -50,7 +50,7 @@ function drawWheel() {
   const step = (Math.PI * 2) / categories.length;
 
   // Círculos concéntricos
-  ctx.strokeStyle = "rgba(0,0,0,0.2)";
+  ctx.strokeStyle = "rgba(0,0,0,0.05)";
   for (let i = 1; i <= 10; i++) {
     ctx.beginPath();
     ctx.arc(centerX, centerY, (radius / 10) * i, 0, Math.PI * 2);
@@ -70,12 +70,12 @@ function drawWheel() {
     ctx.stroke();
 
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.font = "bold 10px Segoe UI";
+    ctx.fillStyle = "rgba(0,0,0,0.85)";
+    ctx.font = "bold 12px courier new";
     ctx.translate(centerX, centerY);
     ctx.rotate(angle);
     ctx.textAlign = "right";
-    ctx.fillText(cat.name, radius, 1);
+    ctx.fillText(cat.name, radius, -2);
     ctx.restore();
   });
 
@@ -90,15 +90,15 @@ function drawWheel() {
     else ctx.lineTo(x, y);
   });
   ctx.closePath();
-  ctx.fillStyle = "rgba(227, 113, 182, 0.4)";
+  ctx.fillStyle = "rgba(139, 146, 240, 0.4)";
   ctx.fill();
-  ctx.strokeStyle = "#E371B6";
+  ctx.strokeStyle = "#8B92F0";
   ctx.stroke();
 
   // Nombre en el centro (transparente)
   if (nombreInput.value.trim() !== "") {
     ctx.font = "bold 24px Segoe UI";
-    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.textAlign = "center";
     ctx.fillText(nombreInput.value, centerX, centerY);
   }
@@ -247,7 +247,7 @@ downloadBtn.addEventListener("click", () => {
     tempCtx.drawImage(headerImg, 0, 0, tempCanvas.width, headerHeight);
 
     // Dibujar título
-    tempCtx.font = "bold 16px Segoe UI";
+    tempCtx.font = "bold 28px Segoe UI";
     tempCtx.fillStyle = "#0f111e";
     tempCtx.textAlign = "center";
     tempCtx.textBaseline = "middle";
@@ -259,7 +259,7 @@ downloadBtn.addEventListener("click", () => {
     // Añadir fecha y hora en la esquina inferior derecha
     const now = new Date();
     const fechaHora = now.toLocaleString();
-    tempCtx.font = "8px Segoe UI";
+    tempCtx.font = "14px Segoe UI";
     tempCtx.fillStyle = "rgba(0,0,0,0.6)";
     tempCtx.textAlign = "right";
     tempCtx.textBaseline = "bottom";
